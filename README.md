@@ -4,12 +4,14 @@
 
 _Leonid Titov, 2019_
 
-Useful if you need to implement it on your own, for some reason. Not useful if you use stock
+A friend of mine, once again, asked if I can help with some simple but effective regulator code for his DIY project. Because people used to see perfectly straight lines on equipment regulated by my own algorithms, they choose to ask me, not the Internet, for a regulation advice. Does that mean that I became kind of an expert? Maybe. But for simple projects you don't need complex alforithms, even trivial classic PID will suffice. And since people keep asking, I wrote this. It's not a theory, not a math, it's 100% down to earth, practical thing, which will help you get the job done.
+
+_Useful if you need to implement it on your own, for some reason. Not useful if you use stock
 regulator (either physical controller, or a "block" in the PLC program), because ALL OF THEM WORK DIFFERENTLY,
 their implementors can't agree neither on terminology (proportional band vs. gain, integration time vs. reset time, etc),
-nor what exactly is an integral, how and of what it should be calculated of.
+nor what exactly is an integral, how and of what it should be calculated of._
 
-_Disclaimer: I don't say the classic PID perfect, nor do I advocate to use it; it's just a clarification of what it is, and is
+_I don't say the classic PID perfect, nor do I advocate to use it; it's just a clarification of what it is, and is
 suitable for like 97% of applications. Again, this might help if you need to implement one on your own._
 
 ### "Wikipedia version"
