@@ -1,18 +1,20 @@
 # ClassicPID
 
-### Classical PID algorithm, explained in (correct and almost complete) (pseudo) code.
+### Classical PID controller algorithm, explained in (correct and almost complete) (pseudo) code.
 
 _Leonid Titov, 2019_
 
-A friend of mine, once again, asked if I can help with some simple but effective regulator code for his DIY project. Because people used to see perfectly straight lines on equipment regulated by my own algorithms, they choose to ask me, not the Internet, for a regulation advice. Does that mean that I became kind of an expert? Maybe. But for simple projects you don't need complex alforithms, even trivial classic PID will suffice. And since people keep asking, I wrote this. It's not a theory, not a math, it's 100% down to earth, practical thing, which will help you get the job done.
+Once again, a friend of mine asked if I can help with some simple but effective regulator code for a DIY project. Because people used to see perfectly straight lines on equipment regulated by my own algorithms, they choose to ask me, not the Internet, for a regulation advice. Does that mean that I became kind of an expert? Maybe. But for simple projects you don't need complex algorithms, even trivial classic PID will suffice. And since people keep asking, I wrote this.
 
-_Useful if you need to implement it on your own, for some reason. Not useful if you use stock
-regulator (either physical controller, or a "block" in the PLC program), because ALL OF THEM WORK DIFFERENTLY,
+It's not a theory nor a math (for that see links at the end), it's 100% down to earth, practical thing, which will help you get the job done.
+
+_Useful if you need to implement it on your own, for some reason. Not that useful if you use stock
+regulator (either physical controller, or a "block" in the PLC program), because ALL OF THEM WORK WITH SUBTLE DIFFERENCES,
 their implementors can't agree neither on terminology (proportional band vs. gain, integration time vs. reset time, etc),
 nor what exactly is an integral, how and of what it should be calculated of._
 
-_I don't say the classic PID perfect, nor do I advocate to use it; it's just a clarification of what it is, and is
-suitable for like 97% of applications. Again, this might help if you need to implement one on your own._
+_I don't say the classic PID is perfect, nor do I advocate to use it; it's just a clarification of what it is, and is
+suitable for most of general applications._
 
 ### "Wikipedia version"
 
@@ -31,7 +33,7 @@ From Wikipedia, https://en.wikipedia.org/wiki/PID_controller:
 		goto loop
 
 The above is incomplete to the degree of being almost incorrect. I.e. you can't just copy and paste and use it,
-it won't work properly.
+it won't work properly. More on that below.
 
 ### My version #1:
 
@@ -130,6 +132,42 @@ And setting Kd,k5 doesn't make sense then. Because this "classic PID" has the de
 work as intended for very slow processes.
 
 Hope this helps.
+
+### Physical meaning, explanation and clarification
+
+In the classical PID controller, each component, if we “chew” the physics of the process, is responsible for:
+
+1. The proportional part is responsible for the instantaneous corrective response to the instantaneous and unexpected interference. While in a stabilized state, if the measured value A goes away unexpectedly, and we instantly respond to it, with a force proportional to the magnitude of the error.
+
+    In 90% of general industrial applications, this component can be nullified, as I wrote in tables above, because it is of no use. The reason is that in 90% of general industrial applications, possible interference is incommensurable with a delay in the actuation output channel and in the measurement channel. For example, from practice, if you measure the flow and the actual flow “reaches” the program after 3-5 seconds (flowmeter speed), then it is impossible to respond to interferences of like 0.5 seconds length, it will only worsen the process, possibly buildup oscillations. Another example, if, due to the thermal inertia of the equipment, the program sees the actual temperature with a delay of 10 seconds, and the impact of the program on the process leads to its change with a delay of 20 seconds, then again, trying to cancel instant deviations of 1 second length is simply meaningless . It will only build up oscillations.
+
+1. The differential part. The physics of this process is as follows. It doesn’t matter if the differential is there or what, but the meaning is that we are trying to predict in advance if the A parameter’s value reaches the set point SP (if we weren’t on it, for example, during the initial heating). On a graph this would correspond to drawing a tangent to a certain distance. And as soon as we detect predicted A reaching SP, we reduce the output, in an effort to reduce the overshoot of A over an SP.
+
+    Except in the initial stage of engaging the SP level, also called "the end of ramp", this component is not needed anywhere else.
+
+1. The integral component is perhaps the most important, although someone blathers the other way around.
+
+    So, first - THIS IS NOT THE DEFINITE INTEGRAL of calculus, as defined in https://en.wikipedia.org/wiki/Integral. Everywhere all over the books, manuals, and Internet, it is written in formulas as a (some form of) integral, and is called "integral", but when implemented, no one, ever, implements it as definite integral. Why is that? Because the "language of calculus" conveniently offers this concepp, while in a program it is very difficult to calculate it properly (you need a sliding buffer, etc.), and there's no need for that. Therefore, the "integral part" here isn't "the sum of errors for some period of time". Instead it's more like an _antiderivative_, but not exactly.
+
+    Second, the physical meaning of this "integral" component is as follows. I will give a few examples.
+
+    - Example 1. A swinging bar, such as a scale. There is a ball on it. Tilting it, you need to hold the ball exactly in the middle. The ball can be pushed with a finger, and the system must stabilize itself back. This example is one of the few where the proportional component is really needed, and it works, but the integral one is not necessary. Clear?
+
+        Now, let's complicate the experiment a little bit: we will tie the ball with an elastic band so that it constantly pulls it in one direction (or we may blow it with a fan). Now, for it to stabilize in the middle, we need to constantly keep the bar tilted. Here, without an integral component, IT WILL NOT WORK. Why? Its "job" includes, if you want, a "zero offset" in the actuation output channel. But without this, the system cannot be stabilized. Is the physical meaning clear?
+
+    - Example 2. The task is to add water to the tank so that the level is constant, while water constantly flows out from the tank. The initial state is an empty tank, the topping valve is closed.
+
+        Without the integral component, only the proportional one: Since the error is big, we open the tap. Then there are two options. If the proportional coefficient is small, then the valve will open less than there is the outflow, and we will never reach the setpoint level. The second option, the coefficient is large, the level will increase, the error will disappear, and it may even succeed in changing the sign, in any case, the formula will immediately close the tap, the level will begin to fall. THIS IS AN OSCILLATION SYSTEM, which by its nature always sways. On average it can and will pour water, but the swings, as a rule, ON ALL TYPES OF EQUIPMENT, are limited in amplitude only by a breakdown of the equipment, or, in this case, by a periodic overflow and the "empty tank" states.
+
+        Now, if there's an integral component present. In any case, whether the proportional component is large or zero at all, the integral part will gradually grow, and will “offset the zero” of the the valve, and the valve will gradually take such a position to accurately compensate for the water flowing out. The level, though not immediately, but evetually will stabilize.
+
+    - Example 3. The same as 2, but with the heating of an object, which is constantly and simultaneously affected by some cooling. Also, the task of the integral component is to “offset the zero” in heating channel to compensate for simultaneous cooling.
+
+In aviation, the “integral component” is called a “trim”. The term “trimmed plane” means a plane in which, when you release your arms and legs from the controls, it continues to fly straight. For example, being in manual mode, on any plane, deflecting the helm or side stick from yourself or towards yourself, you deviate the pitch of plane. If the plane "constantly climbs into the sky", for example, then you constantly need to keep your control "a little off yourself" to fly smoothly. In order not to keep it like this all the time, on any plane from small to large, it is possible to "trim" the elevators, or turn the wheel mechanically, or do it with electric motor switches, or somehow else. The trimming is the 100% equivalent of the “integral component” in the non-aviation field.
+
+The design from Wikipedia is incorrect, because after a long period off set point, the "integral" part will leave the allowable range and will not return back in a reasonable time. In practice, it looks like equipment where the heating is turned on, and it does not heat up, the valve is open at 0%, up to half an hour sometimes... Helps to wait, or reboot. Apparently, they copied the code from Wikipedia. In my version, this drawback is carefully eliminated.
+
+### Further links
 
 Some links for further exploration, in an unlikely case you are not satisfied with classic algorithm:
   - http://ctms.engin.umich.edu/CTMS/index.php?example=Introduction&section=ControlPID
