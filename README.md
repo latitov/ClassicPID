@@ -6,7 +6,7 @@ _Leonid Titov, 2019_
 
 Once again, a friend of mine asked if I can help with some simple but effective regulator code for a DIY project. Because people used to see perfectly straight lines on equipment regulated by my own algorithms, they choose to ask me, not the Internet, for a regulation advice. Does that mean that I became kind of an expert? Maybe. But for simple projects you don't need complex algorithms, even trivial classic PID will suffice. And since people keep asking, I wrote this.
 
-It's not a theory nor a math (for that see links at the end), it's 100% down to earth, practical thing, which will help you get the job done.
+It's not a theory nor a math (for that see the links at the end), it's 100% down to earth, practical thing, which will help you get the job done.
 
 _Useful if you need to implement it on your own, for some reason. Not that useful if you use stock
 regulator (either physical controller, or a "block" in the PLC program), because ALL OF THEM WORK WITH SUBTLE DIFFERENCES,
