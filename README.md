@@ -82,14 +82,14 @@ Similarly, k5 is the equivalent of Kd.
 
 Effects of changing PID parameters individually are:
 
-|	|Rise time	|Overshoot	|Settling time	|Steady-state error	|Stability	|
-| ---	| ---	| ---	| ---	| ---	| ---	|
-|Kp plus	|faster	|increase	|	|decrease	|degrade	|
-|Kp minus	|slower	|decrease	|	|	|	|
-|Ki or k3 plus	|faster	|increase	|increase	|ELIMINATE	|degrade	|
-|Ki or k3 minus	|slower	|decrease	|decrease	|	|increase	|
-|Kd or k5 plus	|	|DECREASE	|DECREASE	|	|degrade	|
-|Kd or k5 minus	|	|	|	|	|	|
+|	|Momentary error	|Rise time	|Overshoot	|Settling time	|Steady-state error	|Stability	|
+| ---	| ---	| ---	| ---	| ---	| ---	| ---	|
+|Kp plus	|momentary correction effect	|slighly faster	|increase	|	|	|deteriorate	|
+|Kp minus	|	|normal, doesn't affect	|decrease	|	|	|	|
+|Ki or k3 plus	|	|faster	|increase	|increase	|__eliminate__	|deteriorate	|
+|Ki or k3 minus	|	|slower	|decrease	|decrease	|	|increase	|
+|Kd or k5 plus	|	|	|decrease	|decrease	|	|degrade	|
+|Kd or k5 minus	|	|	|	|	|	|	|
 
 
 Again, I didn't say this "Classic PID" is perfect algorithm at all. It just exists, so this is kind of
