@@ -88,7 +88,7 @@ Effects of changing PID parameters individually are:
 |Kp minus	|	|normal, doesn't affect	|decrease	|	|	|	|
 |Ki or k3 plus	|	|faster	|increase	|increase	|__eliminate__	|deteriorate	|
 |Ki or k3 minus	|	|slower	|decrease	|decrease	|	|increase	|
-|Kd or k5 plus	|	|	|decrease	|decrease	|	|degrade	|
+|Kd or k5 plus	|	|	|decrease	|decrease	|	|deteriorate	|
 |Kd or k5 minus	|	|	|	|	|	|	|
 
 
