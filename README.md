@@ -66,7 +66,7 @@ work "out of the box".
 		IF Q > 100 THEN Q := 100; END_IF
 	END_EVERY
 
-Note tha difference in using the `integral` part. In Wikipedia version, it's increment/decrement goes without coefficient, and is unlimited (this is a huge error for real applications). Rather, later in the final summation, it is multiplied by coefficient. In my version, we use it as is in final summation, and __it is limited__ by the standard range, and a coefficient is applied at the increment/decrement stage. I am deeply convinced that my approach is more natural, as k3 naturally defines the _fastness_ of integral part changing, bound inside the standard range. My opinion is that it's more convenient and easy to
+Note the difference in using the `integral` part. In Wikipedia version, it's increment/decrement goes without coefficient, and is unlimited (this is a huge error for real applications). Rather, later in the final summation, it is multiplied by coefficient. In my version, we use it as is in final summation, and __it is limited__ by the standard range, and a coefficient is applied at the increment/decrement stage. I am deeply convinced that my approach is more natural, as k3 naturally defines the _fastness_ of integral part changing, bound inside the standard range. My opinion is that it's more convenient and easy to
 understand and simple in the code.
 
 The k3 is basically a _direct_ equivalent of Ki in Wikipedia version. Look:
@@ -100,7 +100,7 @@ if dt=0.1 sec:
 
 | Parameter	| Typical value	| comment	|
 | ---	| ---	| ---	|
-|Kp:	|=0	|setting it to anything >0 for slow application with significant inertial delay just doesn't make sense.	|
+|Kp:	|=0	|setting it to anything >0 for application with significant inertial delay just doesn't make sense. ("Intertial delay" meaning the delay between regulation action on a system, and a measured responce on that action from the system. It may be due to slow sensors, or slow IO, or placement of sensors relative to actuators, and other factors. For many systems with high intertial delay, setting Kp doesn't make sense.)	|
 |Ki, k3:	|=0.003..0.030	|decrease if there are oscillations, increase for faster reaction.	|
 |Kd, k5:	|=0+	|you can try to increase it slightly above 0 to arrest overshoots, but as well can leave it 0.	|
 
