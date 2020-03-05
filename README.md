@@ -2,18 +2,18 @@
 
 ### Classical PID controller algorithm, explained in (correct and almost complete) (pseudo) code.
 
-_Leonid Titov, 2019_
+_Leonid Titov, 2019-2020_
 
-Once again, a friend of mine asked if I can help with some simple but effective regulator code for a DIY project. Because people used to see perfectly straight lines on equipment regulated by my own algorithms, they choose to ask me, not the Internet, for a regulation advice. Does that mean that I became kind of an expert? Maybe. But for simple projects you don't need complex algorithms, even trivial classic PID will suffice. And since people keep asking, I wrote this.
+Once again, a friend of mine asked if I can help with some simple but effective regulator code for a DIY project. Because people used to see perfectly straight lines on equipment regulated by my own algorithms, they keep asking me for a regulation advice. For simple projects you don't need complex algorithms, even trivial classic PID will suffice. And since people keep asking, I wrote this.
 
 It's not a theory nor a math (for that see the links at the end), it's 100% down to earth, practical thing, which will help you get the job done.
 
-_Useful if you need to implement it on your own, for some reason. Not that useful if you use stock
-regulator (either physical controller, or a "block" in the PLC program), because ALL OF THEM WORK WITH SUBTLE DIFFERENCES,
+_Useful if you need to implement it on your own, for some reason. Note that if you use a stock
+regulator (either physical controller, or a "block" in the PLC program), that ALL OF THEM WORK WITH SUBTLE DIFFERENCES,
 their implementors can't agree neither on terminology (proportional band vs. gain, integration time vs. reset time, etc),
 nor what exactly is an integral, how and of what it should be calculated of._
 
-_I don't say the classic PID is perfect, nor do I advocate to use it; it's just a clarification of what it is, and is
+_I don't say the classic PID is perfect, nor do I advocate its use; it's just a clarification of what it is, and is
 suitable for most of general applications._
 
 ### "Wikipedia version"
@@ -32,43 +32,13 @@ From Wikipedia, https://en.wikipedia.org/wiki/PID_controller:
 		wait(dt)
 		goto loop
 
-The above is incomplete to the degree of being almost incorrect. I.e. you can't just copy and paste and use it,
-it won't work properly. More on that below.
+The above is a math formula written in pseudo-code.
 
-### My version #1:
+### My version:
 
 This is very simplified implementation, it doesn't tackle the (very strongly advisable, almost mandatory)
 A snd SP scaling to standard scale, and dt is fixed to 100 ms, but otherwise you can copy/paste it and it __will__
 work "out of the box".
-
-	A:	Measured Parameter
-	SP:	Set Point
-	Q:	Output, 0..100%
-
-	EVERY 0.1 sec DO
-	
-		IF mode=Heater THEN
-			E := SP - A;
-		END_IF
-		IF mode=Cooler THEN
-			E := A - SP;
-		END_IF
-		
-		integral := integral + E;
-		IF integral < 0 THEN integral := 0; END_IF
-		IF integral > (100 / Ki) THEN integral := (100 / Ki); END_IF
-		
-		derivative := (E - previous_E);
-		previous_E := E;
-		
-		Q := (Kp * E) + (Ki * integral) + (Kd * derivative);
-		
-		IF Q < 0 THEN Q := 0; END_IF
-		IF Q > 100 THEN Q := 100; END_IF
-	END_EVERY
-
-
-### My version #2, functional equivalent of #1:
 
 	A:	Measured Parameter
 	SP:	Set Point
@@ -95,27 +65,37 @@ work "out of the box".
 		IF Q < 0 THEN Q := 0; END_IF
 		IF Q > 100 THEN Q := 100; END_IF
 	END_EVERY
-	
-The k3 is basically the equivalent of Ki. My opinion is that it's more convenient and easy to
-understand and simple in the code. Similarly, k5 is the equivalent of Kd. You can think that
-k3==Ki, and k5==Kd.
 
-Effects of changing parameters individually:
+Note tha difference in using the `integral` part. In Wikipedia version, it's increment/decrement goes without coefficient, and is unlimited (this is a huge error for real applications). Rather, later in the final summation, it is multiplied by coefficient. In my version, we use it as is in final summation, and __it is limited__ by the standard range, and a coefficient is applied at the increment/decrement stage. I am deeply convinced that my approach is more natural, as k3 naturally defines the _fastness_ of integral part changing, bound inside the standard range. My opinion is that it's more convenient and easy to
+understand and simple in the code.
+
+The k3 is basically a _direct_ equivalent of Ki in Wikipedia version. Look:
+
+- increase Ki, and you faster get to the destination value;
+- increase k3, and you faster get to the destination value;
+
+The only difference, is that in the Wikipedia version, the increment is additionally scaled by dt. Thus, the absolute numbers may differ between k3 and Ki, but the general behavious is identical.
+
+Similarly, k5 is the equivalent of Kd.
+
+### You can think that k3==Ki, and k5==Kd.
+
+Effects of changing PID parameters individually are:
 
 |	|Rise time	|Overshoot	|Settling time	|Steady-state error	|Stability	|
 | ---	| ---	| ---	| ---	| ---	| ---	|
-|Kp ++	|faster	|increase	|	|decrease	|degrade	|
-|Kp --	|slower	|decrease	|	|	|	|
-|Ki, k3 ++	|faster	|increase	|increase	|ELIMINATE	|degrade	|
-|Ki, k3 --	|slower	|decrease	|decrease	|	|increase	|
-|Kd, k5 ++	|	|DECREASE	|DECREASE	|	|degrade	|
-|Kd, k5 --	|	|	|	|	|	|
+|Kp plus	|faster	|increase	|	|decrease	|degrade	|
+|Kp minus	|slower	|decrease	|	|	|	|
+|Ki or k3 plus	|faster	|increase	|increase	|ELIMINATE	|degrade	|
+|Ki or k3 minus	|slower	|decrease	|decrease	|	|increase	|
+|Kd or k5 plus	|	|DECREASE	|DECREASE	|	|degrade	|
+|Kd or k5 minus	|	|	|	|	|	|
 
 
 Again, I didn't say this "Classic PID" is perfect algorithm at all. It just exists, so this is kind of
 a clarification of what it is. Not a slightest bit of advocacy.
 
-For 90% of slow temperature regulation applications, like heating a in-flow pasteurizer, these shortcut parameters apply,
+For the temperature regulation applications like heating an in-flow pasteurizer, these shortcut parameters apply,
 if dt=0.1 sec:
 
 | Parameter	| Typical value	| comment	|
@@ -124,7 +104,9 @@ if dt=0.1 sec:
 |Ki, k3:	|=0.003..0.030	|decrease if there are oscillations, increase for faster reaction.	|
 |Kd, k5:	|=0+	|you can try to increase it slightly above 0 to arrest overshoots, but as well can leave it 0.	|
 
-For very slow and intertial systems, e.g. HVAC, the Ki,k3 must be decreased by two orders of magnitude:
+##### Note: some stock PID controllers won't work at all with zero Kp, for some reason, contrary to any logic or common sense.
+
+For very slow and intertial systems, e.g. HVAC, the Ki/k3 must be decreased by two orders of magnitude:
 
 	Ki, k3:	   = 0.00003 .. 0.00030
 
@@ -147,9 +129,9 @@ In the classical PID controller, each component, if we “chew” the physics of
 
 1. The integral component is perhaps the most important, although someone blathers the other way around.
 
-    So, first - THIS IS NOT THE DEFINITE INTEGRAL of calculus, as defined in https://en.wikipedia.org/wiki/Integral. Everywhere all over the books, manuals, and Internet, it is written in formulas as a (some form of) integral, and is called "integral", but when implemented, no one, ever, implements it as definite integral. Why is that? Because the "language of calculus" conveniently offers this concepp, while in a program it is very difficult to calculate it properly (you need a sliding buffer, etc.), and there's no need for that. Therefore, the "integral part" here isn't "the sum of errors for some period of time". Instead it's more like an _antiderivative_, but not exactly.
+    So, first - THIS IS NOT THE DEFINITE INTEGRAL of calculus, as defined in https://en.wikipedia.org/wiki/Integral. Everywhere all over the books, manuals, and Internet, it is written in formulas as a (some form of) integral, and is called "integral", but when implemented, no one, ever, implements it as definite integral. Why is that? Because the "language of calculus" conveniently offers this concept, while in a program it is very difficult to calculate it properly (you need a sliding buffer, etc.), and there's no need for that. Therefore, the "integral part" here isn't "the sum of errors for some period of time". Instead it's more like an __antiderivative__, but even that is not exact.
 
-    Second, the physical meaning of this "integral" component is as follows. I will give a few examples.
+    Secondly, the physical meaning of this "integral" component is as follows. I will give a few examples.
 
     - Example 1. A swinging bar, such as a scale. There is a ball on it. Tilting it, you need to hold the ball exactly in the middle. The ball can be pushed with a finger, and the system must stabilize itself back. This example is one of the few where the proportional component is really needed, and it works, but the integral one is not necessary. Clear?
 
